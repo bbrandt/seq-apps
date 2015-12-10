@@ -12,6 +12,17 @@ using Serilog;
 
 namespace Seq.App.Thresholds.Tests
 {
+    internal class ThresholdReactorTester : ThresholdReactor
+    {
+        public DateTime CurrentBucketSecond
+        {
+            get
+            {
+                return _currentBucketSecond;
+            }
+        }
+    }
+
     [TestFixture]
     public class ThresholdReactorTests
     {
@@ -87,6 +98,24 @@ namespace Seq.App.Thresholds.Tests
         }
 
         [Test]
+        public void when_event_time_before_attach_time_should_not_throw()
+        {
+            const int SecondsBetweenLogs = 0;
+
+            // arrange
+            var sut = GetThresholdReactor(5);
+
+            _testStartTime = sut.CurrentBucketSecond - TimeSpan.FromSeconds(1);
+
+            // act
+            SendXEventsNSecondsApart(sut, 1, SecondsBetweenLogs);
+
+            // assert
+            _logger.Verify(l => l.Information(It.IsAny<string>(), It.IsAny<object[]>()), Times.Never);
+        }
+
+
+        [Test]
         public void when_threshold_tripled_over_time_should_get_3_logs()
         {
             const int ExpectLogs = 3;
@@ -126,9 +155,9 @@ namespace Seq.App.Thresholds.Tests
             }
         }
 
-        private ThresholdReactor GetThresholdReactor(int threshold, bool resetOnThresholdReached = true)
+        private ThresholdReactorTester GetThresholdReactor(int threshold, bool resetOnThresholdReached = true)
         {
-            var sut = new ThresholdReactor()
+            var sut = new ThresholdReactorTester()
                 {
                     EventsInWindowThreshold = threshold, 
                     ThresholdName = Guid.NewGuid().ToString(), 

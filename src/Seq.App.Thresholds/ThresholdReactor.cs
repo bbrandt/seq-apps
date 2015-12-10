@@ -24,7 +24,7 @@ namespace Seq.App.Thresholds
 
         // The date/time, rounded down to the second, corresponding
         // with the latest bucket.
-        DateTime _currentBucketSecond;
+        protected DateTime _currentBucketSecond;
 
         // The time to suppress messages after the threshold has been crossed
         TimeSpan _suppressionTime;
@@ -118,6 +118,13 @@ namespace Seq.App.Thresholds
                 }
 
                 eventBucket = (_currentBucket + distance) % _buckets.Length;
+                
+                if (eventBucket < 0)
+                {
+                    eventBucket = 0;
+                    return false;
+                }
+                
                 return true;
             }
 
